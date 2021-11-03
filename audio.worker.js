@@ -1,16 +1,51 @@
-class AudioWorker extends window.AudioWorkletProcessor {
-	constructor() {
-			console.log('Constructing myworkletprocessor');
-			super();
-	}
+const SMOOTHING_FACTOR = 0.8;
 
-	process(inputs, outputs, parameters) {
-			console.log(`current time: ${currentTime}`);
-			// True to keep running
-			return true;
+class AudioWorker extends AudioWorkletProcessor {
+  constructor () {
+    super();
+    this._volume = 0;
+    this._updateIntervalInMS = 25;
+    this._nextUpdateFrame = this._updateIntervalInMS;
+    this.port.onmessage = event => {
+      if (event.data.updateIntervalInMS)
+        this._updateIntervalInMS = event.data.updateIntervalInMS;
+    }
+  }
+
+  get intervalInFrames () {
+    return this._updateIntervalInMS / 1000 * sampleRate;
+  }
+
+  process (inputs, outputs, parameters) {
+    const input = inputs[0];
+
+    // Note that the input will be down-mixed to mono; however, if no inputs are
+    // connected then zero channels will be passed in.
+    if (input.length > 0) {
+      const samples = input[0];
+      let sum = 0;
+      let rms = 0;
+
+      // Calculated the squared-sum.
+      for (let i = 0; i < samples.length; ++i)
+        sum += samples[i] * samples[i];
+
+      // Calculate the RMS level and update the volume.
+      rms = Math.sqrt(sum / samples.length);
+      this._volume = Math.max(rms, this._volume * SMOOTHING_FACTOR);
+
+      // Update and sync the volume property with the main thread.
+      this._nextUpdateFrame -= samples.length;
+      if (this._nextUpdateFrame < 0) {
+        this._nextUpdateFrame += this.intervalInFrames;
+        this.port.postMessage({volume: this._volume});
+      }
+    }
+		// True to keep running
+		return true;
 	}
 }
 
-AudioWorkletGlobalScope.registerProcessor('audio-meter', AudioWorker)
+registerProcessor('audio-meter', AudioWorker)
 
 export default AudioWorker;
