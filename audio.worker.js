@@ -1,22 +1,19 @@
-const SMOOTHING_FACTOR = 0.8;
+const SMOOTHING_FACTOR = 0.9;
 
+// Build an AudioWorkletProcessor that will be used by the worklet processing the stream
 class AudioWorker extends AudioWorkletProcessor {
   constructor () {
     super();
-    this._volume = 0;
-    this._updateIntervalInMS = 25;
-    this._nextUpdateFrame = this._updateIntervalInMS;
-    this.port.onmessage = event => {
-      if (event.data.updateIntervalInMS)
-        this._updateIntervalInMS = event.data.updateIntervalInMS;
-    }
+    this.volume = 0;
+    this.updateIntervalInMS = 25;
+    this.nextUpdateFrame = this.updateIntervalInMS;
   }
 
-  get intervalInFrames () {
-    return this._updateIntervalInMS / 1000 * sampleRate;
+  get intervalInFrames() {
+    return this.updateIntervalInMS / 1000 * sampleRate;
   }
 
-  process (inputs, outputs, parameters) {
+  process(inputs, outputs, parameters) {
     const input = inputs[0];
 
     // Note that the input will be down-mixed to mono; however, if no inputs are
@@ -32,13 +29,13 @@ class AudioWorker extends AudioWorkletProcessor {
 
       // Calculate the RMS level and update the volume.
       rms = Math.sqrt(sum / samples.length);
-      this._volume = Math.max(rms, this._volume * SMOOTHING_FACTOR);
+      this.volume = Math.max(rms, this.volume * SMOOTHING_FACTOR);
 
       // Update and sync the volume property with the main thread.
-      this._nextUpdateFrame -= samples.length;
-      if (this._nextUpdateFrame < 0) {
-        this._nextUpdateFrame += this.intervalInFrames;
-        this.port.postMessage({volume: this._volume});
+      this.nextUpdateFrame -= samples.length;
+      if (this.nextUpdateFrame < 0) {
+        this.nextUpdateFrame += this.intervalInFrames;
+        this.port.postMessage({volume: this.volume});
       }
     }
 		// True to keep running
