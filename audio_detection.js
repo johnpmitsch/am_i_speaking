@@ -1,7 +1,12 @@
+ // Volume has to be above this level to trigger the indicator
 const THRESHOLD = 1;
+ // Queue size * Update interval of the audio worker is how long in ms the queue will stay around for
+ // This will determine how responsive the speaking indicator is to turn off. Larger queue means the indicator
+ // will turn off quicker. Lower queue could lead to more "choppy" indicator and larger queue could lead to "laggy"
+ // indicator
 const QUEUE_SIZE = 8;
 
-// Create a fixed size queue that can be will be used to append booleans on to and then evaluate if the
+// Create a fixed size queue that can be will be used to append booleans onto and then evaluate if the
 // queue has any truthy elements in this. In practice, this is useful for speaking since we can quickly react
 // to speaking and turn on the indicator, but also not turn off the indicator as frequently, for instance when
 // the user pauses or the natural gaps of volume in natural speech. By seeing of the queue is truthy in total,

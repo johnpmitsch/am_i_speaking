@@ -5,6 +5,7 @@ const average = list => list.reduce((prev, curr) => prev + curr) / list.length;
 
 // Build an AudioWorkletProcessor that will be used by the worklet processing the stream
 // This runs off the main thread in a separate worklet thread
+// Influenced by https://stackoverflow.com/a/62732195
 class AudioWorker extends AudioWorkletProcessor {
   constructor () {
     super();
@@ -38,19 +39,17 @@ class AudioWorker extends AudioWorkletProcessor {
       }
 
       // Calculate the RMS level and update the volume. RMS stands for root mean square, is a metering 
-      //tool that measures the average loudness of an audio track within a window
+      // tool that measures the average loudness of an audio track within a window
       rms = Math.sqrt(sum / samples.length);
-      //this.volume = Math.max(rms, this.volume * SMOOTHING_FACTOR);
-      this.allRmsForInterval.push(rms)
+      this.allRmsForInterval.push(rms) // push onto array keeping track of the interval's RMS
 
-      this.nextUpdateFrame -= samples.length; // reduce this by the sample size until it gets below zero
+      this.nextUpdateFrame -= samples.length; // reduce this count by the sample size until it gets below zero
       if (this.nextUpdateFrame < 0) {
         this.nextUpdateFrame += this.intervalInFrames; // add the interval back to the frame update
-        // Get the average RMS for the interval
-        this.volume = average(this.allRmsForInterval)
+        this.volume = average(this.allRmsForInterval) // Get the average RMS for the interval
         // Update and sync the volume property with the main thread.
         this.port.postMessage({volume: this.volume * VOLUME_MULTIPLIER});
-        this.allRmsForInterval = [];
+        this.allRmsForInterval = []; // reset this
       }
     }
 		// True to keep running
