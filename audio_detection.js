@@ -1,4 +1,38 @@
-const threshold = 1;
+const THRESHOLD = 1;
+const QUEUE_SIZE = 8;
+
+// Create a fixed size queue that can be will be used to append booleans on to and then evaluate if the
+// queue has any truthy elements in this. In practice, this is useful for speaking since we can quickly react
+// to speaking and turn on the indicator, but also not turn off the indicator as frequently, for instance when
+// the user pauses or the natural gaps of volume in natural speech. By seeing of the queue is truthy in total,
+// we can evaluate the last N ms of speech only turn the indicator off if there has been no speech at all
+// during that time.
+class Queue {
+  constructor(size) {
+		this.queue = new Array(size); // Initialize new array, defaults to empty/falsey values
+	}
+
+	push(element) {
+		this.queue.push(element); // Push element on to end of array
+		this.queue.shift(); // Shift to remove the first "stale" element of Array in the first index
+	}
+
+	isTruthy() {
+		return this.queue.some(element => element); // Is anything in the queue truthy?
+	}
+}
+
+speakingQueue = new Queue(QUEUE_SIZE); // initialize queue
+
+const detectSpeaking = (event) => {
+	// Grab the volume level from our message sent from the audio worker 
+	const { data: { volume=0 } } = event
+	if (volume) {
+		speakingQueue.push(volume > THRESHOLD); // push speaking boolean on to the queue
+		// Update the DOM based on any presence of speaking in the queue
+		document.querySelector("#speaking-indicator").innerHTML = speakingQueue.isTruthy() ? "yes" : "no";
+	}
+}
 
 // Get user input from microphone
 navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
@@ -21,17 +55,9 @@ navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
 		// is doing the stream processing. Then, connect back to the AudioContext object's desitnation, which is
 		// the final destination of all audio in the context
 		microphone.connect(worklet).connect(audioContext.destination)
-
 		// Open up a port between the worklet processor and it's associated AudioNode. The worklet consists of both an AudioNode
 		// and an AudioWorkletProcessor, this allows communication between them. "onmessage" is called when the port receives a
-		// message.
-		worklet.port.onmessage = event => {
-			const { data: { volume=0 } } = event
-			let sensibility = 5 // Just to add any sensibility to our ecuation
-			if (volume) {
-				const total = (volume * 100) / sensibility
-				document.querySelector("#speaking-indicator").innerHTML = (total > threshold) ? "yes" : "no"
-			}
-		}
+		// message. This will be sent back at a certain interval for the main thread to process
+		worklet.port.onmessage = detectSpeaking
 	});
 });
