@@ -52,9 +52,9 @@ class AudioWorker extends AudioWorkletProcessor {
         this.allRmsForInterval = []; // reset this
       }
     }
-		// True to keep running
-		return true;
-	}
+    // True to keep running
+    return true;
+  }
 }
 
 registerProcessor('audio-meter', AudioWorker)
