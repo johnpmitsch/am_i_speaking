@@ -4,7 +4,7 @@ const THRESHOLD = 1;
  // This will determine how responsive the speaking indicator is to turn off. Larger queue means the indicator
  // will turn off quicker. Lower queue means more "choppy" indicator and larger queue means more "laggy"
  // indicator
-const QUEUE_SIZE = 6;
+const QUEUE_SIZE = 8;
 
 // Create a fixed size queue that can be will be used to append booleans onto and then evaluate if the
 // queue has any truthy elements in this. In practice, this is useful for speaking since we can quickly react
