@@ -1,10 +1,10 @@
  // Volume has to be above this level to trigger the indicator
 const THRESHOLD = 1;
- // Queue size * Update interval of the audio worker is how long in ms the queue will stay around for
+ // Queue size * Update interval of the audio worker is how long in ms the queue update will stay around for
  // This will determine how responsive the speaking indicator is to turn off. Larger queue means the indicator
- // will turn off quicker. Lower queue could lead to more "choppy" indicator and larger queue could lead to "laggy"
+ // will turn off quicker. Lower queue means more "choppy" indicator and larger queue means more "laggy"
  // indicator
-const QUEUE_SIZE = 8;
+const QUEUE_SIZE = 6;
 
 // Create a fixed size queue that can be will be used to append booleans onto and then evaluate if the
 // queue has any truthy elements in this. In practice, this is useful for speaking since we can quickly react
@@ -29,10 +29,13 @@ class Queue {
 
 speakingQueue = new Queue(QUEUE_SIZE); // initialize queue
 
+let runningAverage = 0;
+
 const detectSpeaking = (event) => {
   // Grab the volume level from our message sent from the audio worker 
   const { data: { volume=0 } } = event
   if (volume) {
+    console.log(volume)
     speakingQueue.push(volume > THRESHOLD); // push speaking boolean on to the queue
     // Update the DOM based on any presence of speaking in the queue
     document.querySelector("#speaking-indicator").innerHTML = speakingQueue.isTruthy() ? "yes" : "no";
@@ -57,7 +60,7 @@ navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
     // the main thread
     const worklet = new AudioWorkletNode(audioContext, 'audio-meter')
     // Connect the AudioNode that represents our microphone audio stream to the worklet AudioNode that 
-    // is doing the stream processing. Then, connect back to the AudioContext object's desitnation, which is
+    // is doing the stream processing. Then, connect back to the AudioContext object's destination, which is
     // the final destination of all audio in the context
     microphone.connect(worklet).connect(audioContext.destination)
     // Open up a port between the worklet processor and it's associated AudioNode. The worklet consists of both an AudioNode

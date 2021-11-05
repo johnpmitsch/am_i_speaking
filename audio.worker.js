@@ -1,4 +1,4 @@
-const UPDATE_INTERVAL = 50 // How often (in ms) do we send this back to the main thread?
+const UPDATE_INTERVAL = 250 // How often (in ms) do we send this back to the main thread?
 const VOLUME_MULTIPLIER = 100; // Multiply the volume so we can work with whole numbers
 
 const average = list => list.reduce((prev, curr) => prev + curr) / list.length;
