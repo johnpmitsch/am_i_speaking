@@ -1,45 +1,7 @@
- // Volume has to be above this level to trigger the indicator
-const THRESHOLD = 1;
- // Queue size * Update interval of the audio worker is how long in ms the queue update will stay around for
- // This will determine how responsive the speaking indicator is to turn off. Larger queue means the indicator
- // will turn off quicker. Lower queue means more "choppy" indicator and larger queue means more "laggy"
- // indicator
-const QUEUE_SIZE = 8;
-
-// Create a fixed size queue that can be will be used to append booleans onto and then evaluate if the
-// queue has any truthy elements in this. In practice, this is useful for speaking since we can quickly react
-// to speaking and turn on the indicator, but also not turn off the indicator as frequently, for instance when
-// the user pauses or the natural gaps of volume in natural speech. By seeing of the queue is truthy in total,
-// we can evaluate the last N ms of speech only turn the indicator off if there has been no speech at all
-// during that time.
-class Queue {
-  constructor(size) {
-    this.queue = new Array(size); // Initialize new array, defaults to empty/falsey values
-  }
-
-  push(element) {
-    this.queue.push(element); // Push element on to end of array
-    this.queue.shift(); // Shift to remove the first "stale" element of Array in the first index
-  }
-
-  isTruthy() {
-    return this.queue.some(element => element); // Is anything in the queue truthy?
-  }
-}
-
-speakingQueue = new Queue(QUEUE_SIZE); // initialize queue
-
-let runningAverage = 0;
-
 const detectSpeaking = (event) => {
-  // Grab the volume level from our message sent from the audio worker 
-  const { data: { volume=0 } } = event
-  if (volume) {
-    console.log(volume)
-    speakingQueue.push(volume > THRESHOLD); // push speaking boolean on to the queue
-    // Update the DOM based on any presence of speaking in the queue
-    document.querySelector("#speaking-indicator").innerHTML = speakingQueue.isTruthy() ? "yes" : "no";
-  }
+  // Grab the isSpeaking indicator from the worker process message
+  const { data: { isSpeaking=false } } = event
+  document.querySelector("#speaking-indicator").innerHTML = isSpeaking ? "yes" : "no";
 }
 
 // Get user input from microphone
