@@ -27,7 +27,7 @@ navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
     microphone.connect(worklet).connect(audioContext.destination)
     // Open up a port between the worklet processor and it's associated AudioNode. The worklet consists of both an AudioNode
     // and an AudioWorkletProcessor, this allows communication between them. "onmessage" is called when the port receives a
-    // message. This will be sent back at a certain interval for the main thread to process
+    // message. This will be sent back at a certain interval for the main thread to handle
     worklet.port.onmessage = detectSpeaking
   });
 });

@@ -1,9 +1,8 @@
 const UPDATE_INTERVAL = 250 // How often (in ms) do we send this back to the main thread?
 const VOLUME_MULTIPLIER = 100; // Multiply the volume so we can work with whole numbers
 // UPDATE_INTERVAL * INDICATOR_BUFFER_SIZE of the audio worker is how long in ms the buffer update will stay around for
-// This will determine how responsive the speaking indicator is to turn off. Larger buffer means the indicator
-// will turn off quicker. Lower buffer means more "choppy" indicator and larger buffer means more "laggy"
-// indicator
+// This will determine how responsive the speaking indicator is to turn off. 
+// Lower buffer means more "choppy" indicator and larger buffer means more "laggy" indicator
 const INDICATOR_BUFFER_SIZE = 8;
 // SPEAKING_BUFFER_SIZE is how many speaking volume records to keep to determine a running average.
 // UPDATE_INTERVAL * SPEAKING_BUFFER_SIZE is how long in ms the buffer keeps volume values for.
@@ -13,8 +12,6 @@ const SPEAKING_BUFFER_SIZE = 1000;
 const STARTING_THRESHOLD = 1;
 // Smooth out the running average, this can be helpful when someone is speaking for a long period of time.
 const SMOOTHING_FACTOR = 0.8;
-
-
 
 const average = list => list.reduce((prev, curr) => prev + curr) / list.length;
 
@@ -47,6 +44,7 @@ class SpeakingBuffer {
     // Smooth out the running average to account for when someone starts speaking right away or for long periods of time
     const smoothedRunningAverage = runningAverage * SMOOTHING_FACTOR
     // We generally want to account for "noisier" microphones, so keep the threshold from dropping to too low of a level
+
     this.threshold = Math.max(STARTING_THRESHOLD, smoothedRunningAverage)
   }
 
@@ -110,6 +108,7 @@ class AudioWorker extends AudioWorkletProcessor {
         this.allRmsForInterval = []; // reset the RMS for the current interval
       }
     }
+
     // True to keep running
     return true;
   }
